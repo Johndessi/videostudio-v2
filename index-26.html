@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>VidéoStudio v2 — Le Réalisateur Automatique</title>
+<style>
+  :root {
+    --gold: #F5A623;
+    --red: #C0392B;
+    --bg: #0a0a0a;
+    --bg2: #0f0f0f;
+    --bg3: #111;
+    --bg4: #1a1a1a;
+    --border: #222;
+    --border2: #2a2a2a;
+    --text: #eee;
+    --text2: #aaa;
+    --muted: #555;
+    --muted2: #888;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    min-height: 100vh; -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    background: var(--bg2); border-bottom: 1px solid var(--bg4);
+    padding: 16px 16px 0; position: sticky; top: 0; z-index: 100;
+  }
+  .header-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--gold), var(--red));
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .logo-title {
+    font-size: 18px; font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), #fff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
+  .stars { margin-left: auto; display: flex; gap: 2px; }
+  .star { color: var(--gold); font-size: 12px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; }
+  .tab-btn {
+    flex: 1; padding: 10px 4px; background: transparent; border: none;
+    border-bottom: 2px solid transparent; color: var(--muted);
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    font-family: inherit; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .tab-btn.active { border-bottom-color: var(--gold); color: var(--gold); font-weight: 700; }
+  .tab-icon { width: 20px; height: 20px; }
+
+  /* ── CONTENT ── */
+  #content { padding: 20px 16px 60px; }
+  .module { display: none; }
+  .module.active { display: block; }
+
+  /* ── FORM ELEMENTS ── */
+  .field-label {
+    color: var(--muted); font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase; margin: 16px 0 8px;
+  }
+  textarea, input[type=text] {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 10px; color: var(--text); padding: 12px;
+    font-size: 14px; resize: vertical; outline: none;
+    font-family: inherit; line-height: 1.6;
+  }
+  textarea:focus, input[type=text]:focus { border-color: var(--gold); }
+
+  /* ── CHIPS ── */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted2); font-size: 12px;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .chip.active {
+    border-color: var(--gold); background: rgba(245,166,35,0.15); color: var(--gold);
+  }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    width: 100%; margin-top: 20px; padding: 14px; border: none;
+    border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit; letter-spacing: 0.5px;
+    background: linear-gradient(135deg, var(--gold), var(--red));
+    transition: opacity 0.2s;
+  }
+  .btn-primary:disabled { background: var(--bg4); cursor: not-allowed; }
+  .btn-outline {
+    width: 100%; margin-top: 10px; padding: 13px; background: transparent;
+    border: 1px solid var(--border); border-radius: 12px; color: var(--text2);
+    font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .btn-outline.gold { border-color: var(--gold); color: var(--gold); }
+  .btn-outline:hover { border-color: var(--muted2); }
+  .btn-icon {
+    padding: 14px 18px; background: var(--bg4); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--muted2); cursor: pointer; font-family: inherit;
+  }
+
+  /* ── RESULT CARD ── */
+  .result-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-top: 8px;
+  }
+  .result-card-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+  }
+  .result-label { color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .btn-copy {
+    background: transparent; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--muted2); padding: 4px 8px; cursor: pointer;
+    display: flex; align-items: center; gap: 4px; font-size: 11px; font-family: inherit;
+  }
+  .result-text { color: #ddd; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+  /* ── RANGE ── */
+  input[type=range] { accent-color: var(--gold); }
+  .range-row { display: flex; align-items: center; gap: 12px; }
+  .range-label { color: var(--muted2); font-size: 12px; }
+  .range-val { color: var(--gold); font-weight: 700; font-size: 13px; min-width: 28px; }
+
+  /* ── TELEPROMPTER PREVIEW ── */
+  .tp-preview {
+    margin-top: 16px; background: #050505; border-radius: 10px;
+    padding: 14px; border: 1px solid var(--bg4); max-height: 160px; overflow: hidden;
+    position: relative;
+  }
+  .tp-preview-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .tp-preview-text { color: var(--text2); font-size: 15px; line-height: 1.7; }
+  .tp-preview-fade {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+    background: linear-gradient(transparent, #050505);
+  }
+
+  /* ── FULLSCREEN TELEPROMPTER ── */
+  #fullscreen-tp {
+    display: none; position: fixed; inset: 0; background: #000; z-index: 999;
+    flex-direction: column;
+  }
+  #fullscreen-tp.show { display: flex; }
+  .tp-controls {
+    background: rgba(0,0,0,0.95); padding: 12px 16px;
+    display: flex; gap: 10px; align-items: center;
+    border-bottom: 1px solid #111;
+  }
+  .tp-ctrl-btn {
+    background: var(--gold); border: none; border-radius: 8px;
+    color: #fff; padding: 8px 14px; cursor: pointer; font-size: 16px;
+  }
+  .tp-ctrl-btn.secondary { background: var(--bg4); }
+  .tp-ctrl-btn.danger { background: var(--red); font-size: 12px; padding: 8px 12px; }
+  #tp-scroll-area {
+    flex: 1; overflow: hidden; padding: 30px 24px; position: relative;
+  }
+  #tp-text-content {
+    font-size: 24px; line-height: 1.8; color: #fff;
+    white-space: pre-wrap; font-weight: 500;
+    font-family: Georgia, serif; padding-bottom: 60vh;
+  }
+  .tp-focus-line {
+    position: fixed; top: 50%; left: 0; right: 0; height: 2px;
+    background: rgba(245,166,35,0.25); pointer-events: none;
+  }
+
+  /* ── COPY TOAST ── */
+  #toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--gold); color: #000; padding: 8px 20px;
+    border-radius: 20px; font-size: 13px; font-weight: 700;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9999;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── FOOTER ── */
+  #footer {
+    text-align: center; padding: 12px;
+    border-top: 1px solid var(--bg4); margin-top: 20px;
+  }
+  #footer p { color: #2a2a2a; font-size: 10px; letter-spacing: 1px; }
+
+  .flex-row { display: flex; gap: 10px; }
+  .flex-row .btn-primary { margin-top: 0; flex: 1; }
+  .mt-20 { margin-top: 20px; }
+  .copy-ok { color: var(--gold); font-size: 12px; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-top">
+    <div class="logo-icon">🎬</div>
+    <div>
+      <div class="logo-title">VidéoStudio v2</div>
+      <div class="logo-sub">PHASE 1 · LE CERVEAU</div>
+    </div>
+    <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('script')" id="tab-script">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Script IA
+    </button>
+    <button class="tab-btn" onclick="switchTab('teleprompter')" id="tab-teleprompter">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      Téléprompter
+    </button>
+    <button class="tab-btn" onclick="switchTab('meta')" id="tab-meta">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Métadonnées
+    </button>
+  </div>
+</div>
+
+<div id="content">
+
+<!-- ══ MODULE 01: SCRIPT IA ══ -->
+<div id="module-script" class="module active">
+  <div class="field-label">Ton idée en une phrase</div>
+  <textarea id="script-idea" rows="3"
+    placeholder="Ex: Pourquoi les jeunes africains doivent investir dès 20 ans..."></textarea>
+
+  <div class="field-label">Plateforme</div>
+  <div class="chips" id="chips-platform">
+    <button class="chip active" data-val="TikTok">TikTok</button>
+    <button class="chip" data-val="YouTube">YouTube</button>
+    <button class="chip" data-val="Instagram">Instagram</button>
+    <button class="chip" data-val="Facebook">Facebook</button>
+  </div>
+
+  <div class="field-label">Langue</div>
+  <div class="chips" id="chips-lang">
+    <button class="chip active" data-val="Français">Français</button>
+    <button class="chip" data-val="Nouchi">Nouchi</button>
+    <button class="chip" data-val="Anglais">Anglais</button>
+  </div>
+
+  <div class="field-label">Style</div>
+  <div class="chips" id="chips-style">
+    <button class="chip active" data-val="Éducatif">Éducatif</button>
+    <button class="chip" data-val="Motivationnel">Motivationnel</button>
+    <button class="chip" data-val="Divertissement">Divertissement</button>
+    <button class="chip" data-val="Informatif">Informatif</button>
+    <button class="chip" data-val="Slam / Poésie">Slam / Poésie</button>
+    <button class="chip" data-val="Tutoriel">Tutoriel</button>
+    <button class="chip" data-val="Identité africaine">Identité africaine</button>
+    <button class="chip" data-val="Cinématique">Cinématique</button>
+  </div>
+
+  <div class="field-label">Durée cible</div>
+  <div class="chips" id="chips-duration">
+    <button class="chip active" data-val="15s – 30s">15s – 30s</button>
+    <button class="chip" data-val="1 – 3 min">1 – 3 min</button>
+    <button class="chip" data-val="5 – 10 min">5 – 10 min</button>
+    <button class="chip" data-val="10 – 30 min">10 – 30 min</button>
+    <button class="chip" data-val="30 min – 2h">30 min – 2h</button>
+  </div>
+
+  <button class="btn-primary" id="btn-gen-script" onclick="generateScript()">
+    ✦ Générer le Script
+  </button>
+
+  <div id="script-result" style="display:none; margin-top:16px;">
+    <div class="result-card">
+      <div class="result-card-header">
+        <span class="result-label">Script Généré</span>
+        <button class="btn-copy" onclick="copyText('script-output', 'Script copié !')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copier
+        </button>
+      </div>
+      <p class="result-text" id="script-output"></p>
+    </div>
+    <button class="btn-outline gold mt-20" onclick="sendToTeleprompter()">
+      → Ouvrir dans le Téléprompter
+    </button>
+  </div>
+</div>
+
+<!-- ══ MODULE 02: TÉLÉPROMPTER ══ -->
+<div id="module-teleprompter" class="module">
+  <div class="field-label">Colle ou écris ton script</div>
+  <textarea id="tp-text" rows="7"
+    placeholder="Colle ici ton script généré ou écris directement..."></textarea>
+
+  <div class="field-label">Vitesse de défilement</div>
+  <div class="range-row">
+    <span class="range-label">Lent</span>
+    <input type="range" id="tp-speed" min="1" max="6" step="0.5" value="2"
+      oninput="document.getElementById('tp-speed-val').textContent = this.value + 'x'"
+      style="flex:1"/>
+    <span class="range-label">Rapide</span>
+    <span class="range-val" id="tp-speed-val">2x</span>
+  </div>
+
+  <div class="flex-row mt-20">
+    <button class="btn-primary" id="btn-tp-play" onclick="toggleTeleprompter()">
+      ▶ Démarrer
+    </button>
+    <button class="btn-icon" onclick="resetTeleprompter()">↺</button>
+  </div>
+
+  <button class="btn-outline mt-20" onclick="openFullscreen()" id="btn-fullscreen">
+    ⛶ Mode Plein Écran (Filmage)
+  </button>
+
+  <div class="tp-preview">
+    <div class="tp-preview-label">Aperçu</div>
+    <div class="tp-preview-text" id="tp-preview-text">Ton script apparaîtra ici...</div>
+    <div class="tp-preview-fade"></div>
+  </div>
+</div>
+
+<!-- ══ MODULE 03: MÉTADONNÉES ══ -->
+<div id="module-meta" class="module">
+  <div class="field-label">Décris ton contenu vidéo</div>
+  <textarea id="meta-desc" rows="4"
+    placeholder="Ex: Une vidéo sur l'histoire du royaume Ashanti et son influence sur la culture ivoirienne actuelle..."></textarea>
+
+  <div class="field-label">Plateformes cibles (choix multiple)</div>
+  <div class="chips" id="chips-meta-platforms">
+    <button class="chip active" data-val="TikTok">TikTok</button>
+    <button class="chip active" data-val="YouTube">YouTube</button>
+    <button class="chip" data-val="Instagram">Instagram</button>
+    <button class="chip" data-val="Facebook">Facebook</button>
+  </div>
+
+  <div class="field-label">Langue</div>
+  <div class="chips" id="chips-meta-lang">
+    <button class="chip active" data-val="Français">Français</button>
+    <button class="chip" data-val="Nouchi">Nouchi</button>
+    <button class="chip" data-val="Anglais">Anglais</button>
+  </div>
+
+  <button class="btn-primary" id="btn-gen-meta" onclick="generateMeta()">
+    ✦ Générer les Métadonnées
+  </button>
+
+  <div id="meta-result" style="display:none; margin-top:16px;"></div>
+</div>
+
+</div><!-- /content -->
+
+<!-- FOOTER -->
+<div id="footer"><p>SECKA · BUILDER IVOIRIEN · ABIDJAN</p></div>
+
+<!-- FULLSCREEN TELEPROMPTER -->
+<div id="fullscreen-tp">
+  <div class="tp-controls">
+    <button class="tp-ctrl-btn" id="fs-play-btn" onclick="fsToggle()">▶</button>
+    <button class="tp-ctrl-btn secondary" onclick="fsReset()">↺</button>
+    <input type="range" id="fs-speed" min="1" max="6" step="0.5" value="2"
+      oninput="fsSpeedChange(this.value)" style="flex:1; accent-color:#F5A623"/>
+    <button class="tp-ctrl-btn danger" onclick="closeFullscreen()">✕ Quitter</button>
+  </div>
+  <div id="tp-scroll-area">
+    <div id="tp-text-content"></div>
+  </div>
+  <div class="tp-focus-line"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✓ Copié !</div>
+
+<script>
+// ══ STATE ══════════════════════════════════════════════
+const state = {
+  scriptPlatform: 'TikTok',
+  scriptLang: 'Français',
+  scriptStyle: 'Éducatif',
+  scriptDuration: '15s – 30s',
+  metaPlatforms: ['TikTok', 'YouTube'],
+  metaLang: 'Français',
+  tpRunning: false,
+  tpScrollPos: 0,
+  tpAnimId: null,
+  tpLastTime: null,
+  fsRunning: false,
+  fsScrollPos: 0,
+  fsAnimId: null,
+  fsLastTime: null,
+};
+
+// ══ TABS ═══════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('module-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  stopTeleprompter();
+}
+
+// ══ CHIPS ══════════════════════════════════════════════
+function initChips(containerId, stateKey, multi = false) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.dataset.val;
+      if (multi) {
+        chip.classList.toggle('active');
+        const active = [...container.querySelectorAll('.chip.active')].map(c => c.dataset.val);
+        state[stateKey] = active.length ? active : [val];
+        if (!active.length) chip.classList.add('active');
+      } else {
+        container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state[stateKey] = val;
+      }
+    });
+  });
+}
+
+initChips('chips-platform', 'scriptPlatform');
+initChips('chips-lang', 'scriptLang');
+initChips('chips-style', 'scriptStyle');
+initChips('chips-duration', 'scriptDuration');
+initChips('chips-meta-platforms', 'metaPlatforms', true);
+initChips('chips-meta-lang', 'metaLang');
+
+// Update tp preview on input
+document.getElementById('tp-text').addEventListener('input', function() {
+  const preview = this.value.slice(0, 200);
+  document.getElementById('tp-preview-text').textContent = preview || 'Ton script apparaîtra ici...';
+});
+
+// ══ CLAUDE API ═════════════════════════════════════════
+async function callClaude(userPrompt, systemPrompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content?.[0]?.text || '';
+}
+
+// ══ MODULE 01: SCRIPT IA ═══════════════════════════════
+async function generateScript() {
+  const idea = document.getElementById('script-idea').value.trim();
+  if (!idea) return;
+  const btn = document.getElementById('btn-gen-script');
+  btn.disabled = true;
+  btn.textContent = '✦ Génération en cours...';
+  document.getElementById('script-result').style.display = 'none';
+
+  try {
+    const nouchiNote = state.scriptLang === 'Nouchi'
+      ? 'Utilise le Nouchi ivoirien avec ses expressions typiques (wari, gou, foutou, drogba, etc.).'
+      : '';
+    const sys = `Tu es un expert en création de contenu vidéo pour les réseaux sociaux africains.
+Tu génères des scripts vidéo professionnels, engageants et culturellement adaptés.
+Langue: ${state.scriptLang === 'Anglais' ? 'English' : 'Français'}. ${nouchiNote}`;
+
+    const prompt = `Génère un script vidéo complet pour cette idée : "${idea}"
+
+Plateforme : ${state.scriptPlatform}
+Style : ${state.scriptStyle}
+Durée cible : ${state.scriptDuration}
+
+Structure obligatoire :
+🎯 HOOK (3-5 secondes qui accrochent)
+📖 CORPS (contenu principal développé)
+📣 CTA (call-to-action final)
+
+Adapte le ton, le rythme et la longueur à la plateforme ${state.scriptPlatform}.
+Rends le script naturel, humain, prêt à être lu devant la caméra.`;
+
+    const text = await callClaude(prompt, sys);
+    document.getElementById('script-output').textContent = text;
+    document.getElementById('script-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('script-output').textContent = 'Erreur : ' + e.message;
+    document.getElementById('script-result').style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✦ Générer le Script';
+}
+
+function sendToTeleprompter() {
+  const text = document.getElementById('script-output').textContent;
+  document.getElementById('tp-text').value = text;
+  document.getElementById('tp-preview-text').textContent = text.slice(0, 200);
+  switchTab('teleprompter');
+}
+
+// ══ MODULE 02: TÉLÉPROMPTER ════════════════════════════
+function toggleTeleprompter() {
+  state.tpRunning = !state.tpRunning;
+  document.getElementById('btn-tp-play').textContent = state.tpRunning ? '⏸ Pause' : '▶ Démarrer';
+  if (state.tpRunning) runTpLoop(); else cancelAnimationFrame(state.tpAnimId);
+}
+
+function stopTeleprompter() {
+  state.tpRunning = false;
+  cancelAnimationFrame(state.tpAnimId);
+  document.getElementById('btn-tp-play').textContent = '▶ Démarrer';
+}
+
+function runTpLoop(timestamp) {
+  if (!state.tpRunning) return;
+  if (!state.tpLastTime) state.tpLastTime = timestamp;
+  const delta = timestamp - state.tpLastTime;
+  state.tpLastTime = timestamp;
+  const speed = parseFloat(document.getElementById('tp-speed').value);
+  state.tpScrollPos += speed * delta * 0.04;
+  // Note: mini preview doesn't actually scroll in collapsed view
+  state.tpAnimId = requestAnimationFrame(runTpLoop);
+}
+
+function resetTeleprompter() {
+  stopTeleprompter();
+  state.tpScrollPos = 0;
+  state.tpLastTime = null;
+}
+
+function openFullscreen() {
+  const text = document.getElementById('tp-text').value.trim();
+  if (!text) { showToast('Écris ou colle un script d\'abord !'); return; }
+  document.getElementById('tp-text-content').textContent = text;
+  document.getElementById('fs-speed').value = document.getElementById('tp-speed').value;
+  state.fsScrollPos = 0;
+  state.fsRunning = false;
+  document.getElementById('fs-play-btn').textContent = '▶';
+  document.getElementById('tp-scroll-area').scrollTop = 0;
+  document.getElementById('fullscreen-tp').classList.add('show');
+}
+
+function closeFullscreen() {
+  fsStop();
+  document.getElementById('fullscreen-tp').classList.remove('show');
+}
+
+function fsToggle() {
+  state.fsRunning = !state.fsRunning;
+  document.getElementById('fs-play-btn').textContent = state.fsRunning ? '⏸' : '▶';
+  if (state.fsRunning) { state.fsLastTime = null; requestAnimationFrame(fsLoop); }
+  else cancelAnimationFrame(state.fsAnimId);
+}
+
+function fsStop() {
+  state.fsRunning = false;
+  cancelAnimationFrame(state.fsAnimId);
+}
+
+function fsReset() {
+  fsStop();
+  state.fsScrollPos = 0;
+  state.fsLastTime = null;
+  document.getElementById('tp-scroll-area').scrollTop = 0;
+  document.getElementById('fs-play-btn').textContent = '▶';
+}
+
+function fsSpeedChange(val) {}
+
+function fsLoop(timestamp) {
+  if (!state.fsRunning) return;
+  if (!state.fsLastTime) state.fsLastTime = timestamp;
+  const delta = timestamp - state.fsLastTime;
+  state.fsLastTime = timestamp;
+  const speed = parseFloat(document.getElementById('fs-speed').value);
+  state.fsScrollPos += speed * delta * 0.04;
+  document.getElementById('tp-scroll-area').scrollTop = state.fsScrollPos;
+  state.fsAnimId = requestAnimationFrame(fsLoop);
+}
+
+// ══ MODULE 03: MÉTADONNÉES ═════════════════════════════
+async function generateMeta() {
+  const desc = document.getElementById('meta-desc').value.trim();
+  if (!desc) return;
+  const btn = document.getElementById('btn-gen-meta');
+  btn.disabled = true;
+  btn.textContent = '✦ Optimisation en cours...';
+  document.getElementById('meta-result').style.display = 'none';
+
+  try {
+    const platforms = state.metaPlatforms.join(', ') || 'YouTube';
+    const sys = `Tu es un expert SEO et optimisation de contenu pour les réseaux sociaux africains.
+Tu génères des métadonnées percutantes et culturellement adaptées.
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks, sans texte avant ou après.`;
+
+    const prompt = `Génère des métadonnées optimisées pour ce contenu vidéo:
+"${desc}"
+
+Plateformes: ${platforms}
+Langue: ${state.metaLang}
+
+JSON exact à retourner:
+{
+  "titre": "titre accrocheur max 60 caractères",
+  "description": "description complète 150-300 mots avec mots clés naturellement intégrés",
+  "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5", "hashtag6", "hashtag7", "hashtag8", "hashtag9", "hashtag10", "hashtag11", "hashtag12", "hashtag13", "hashtag14", "hashtag15"],
+  "tags_seo": ["mot-clé 1", "mot-clé 2", "mot-clé 3", "mot-clé 4", "mot-clé 5", "mot-clé 6", "mot-clé 7", "mot-clé 8"],
+  "miniature_idee": "description en 2 phrases de l image miniature idéale"
+}`;
+
+    const raw = await callClaude(prompt, sys);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
+
+    const hashtags = data.hashtags.map(h => '#' + h.replace(/^#/, '')).join(' ');
+    const tags = data.tags_seo.join(', ');
+
+    const html = `
+      ${makeResultCard('Titre', data.titre, 'meta-titre')}
+      ${makeResultCard('Description', data.description, 'meta-desc-out')}
+      ${makeResultCard('Hashtags (15)', hashtags, 'meta-hash')}
+      ${makeResultCard('Mots-clés SEO', tags, 'meta-seo')}
+      ${makeResultCard('💡 Idée Miniature', data.miniature_idee, 'meta-mini')}
+    `;
+    document.getElementById('meta-result').innerHTML = html;
+    document.getElementById('meta-result').style.display = 'block';
+    // Bind copy buttons
+    document.querySelectorAll('[data-copy-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.copyId;
+        const text = document.getElementById(id).textContent;
+        copyToClipboard(text);
+      });
+    });
+  } catch(e) {
+    document.getElementById('meta-result').innerHTML =
+      `<p style="color:var(--red); margin-top:12px;">Erreur : ${e.message}</p>`;
+    document.getElementById('meta-result').style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✦ Générer les Métadonnées';
+}
+
+function makeResultCard(label, content, id) {
+  return `
+    <div class="result-card" style="margin-top:10px;">
+      <div class="result-card-header">
+        <span class="result-label">${label}</span>
+        <button class="btn-copy" data-copy-id="${id}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copier
+        </button>
+      </div>
+      <p class="result-text" id="${id}">${content}</p>
+    </div>`;
+}
+
+// ══ UTILS ══════════════════════════════════════════════
+function copyText(elementId, msg) {
+  const text = document.getElementById(elementId).textContent;
+  copyToClipboard(text, msg);
+}
+
+function copyToClipboard(text, msg = 'Copié !') {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast(msg));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast(msg);
+  }
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>

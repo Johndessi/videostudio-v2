@@ -1,0 +1,15 @@
+{
+  "name": "videostudio-v2",
+  "version": "2.0.0",
+  "description": "VidéoStudio v2 — Le Réalisateur Automatique",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
