@@ -703,6 +703,33 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
 }
+  // Override callClaude avec clé API
+async function callClaude(userPrompt, systemPrompt) {
+  let apiKey = localStorage.getItem('vs2_api_key');
+  if (!apiKey) {
+    apiKey = prompt('Entre ta clé API Anthropic (sk-ant-...)');
+    if (apiKey) localStorage.setItem('vs2_api_key', apiKey);
+    else return '';
+  }
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-allow-browser': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content?.[0]?.text || '';
+  }
 </script>
 </body>
 </html>
