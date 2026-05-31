@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>VidéoStudio v2 — Le Réalisateur Automatique</title>
+<style>
+  :root {
+    --gold: #F5A623; --red: #C0392B; --bg: #0a0a0a; --bg2: #0f0f0f;
+    --bg3: #111; --bg4: #1a1a1a; --border: #222; --border2: #2a2a2a;
+    --text: #eee; --text2: #aaa; --muted: #555; --muted2: #888;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+  #header { background: var(--bg2); border-bottom: 1px solid var(--bg4); padding: 16px 16px 0; position: sticky; top: 0; z-index: 100; }
+  .header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .logo-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold), var(--red)); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-title { font-size: 18px; font-weight: 800; background: linear-gradient(135deg, var(--gold), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
+  .stars { margin-left: auto; display: flex; gap: 2px; }
+  .star { color: var(--gold); font-size: 12px; }
+  .tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { flex-shrink: 0; padding: 10px 4px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-size: 10px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.2s; min-width: 70px; }
+  .tab-btn.active { border-bottom-color: var(--gold); color: var(--gold); font-weight: 700; }
+  .tab-icon { width: 20px; height: 20px; }
+  #content { padding: 20px 16px 60px; }
+  .module { display: none; }
+  .module.active { display: block; }
+  .field-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin: 16px 0 8px; }
+  textarea, input[type=text] { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); padding: 12px; font-size: 14px; resize: vertical; outline: none; font-family: inherit; line-height: 1.6; }
+  textarea:focus, input[type=text]:focus { border-color: var(--gold); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted2); font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .chip.active { border-color: var(--gold); background: rgba(245,166,35,0.15); color: var(--gold); }
+  .btn-primary { width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; background: linear-gradient(135deg, var(--gold), var(--red)); transition: opacity 0.2s; }
+  .btn-primary:disabled { background: var(--bg4); cursor: not-allowed; }
+  .btn-outline { width: 100%; margin-top: 10px; padding: 13px; background: transparent; border: 1px solid var(--border); border-radius: 12px; color: var(--text2); font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn-outline.gold { border-color: var(--gold); color: var(--gold); }
+  .btn-icon { padding: 14px 18px; background: var(--bg4); border: 1px solid var(--border); border-radius: 12px; color: var(--muted2); cursor: pointer; font-family: inherit; }
+  .result-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 8px; }
+  .result-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .result-label { color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .btn-copy { background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--muted2); padding: 4px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 11px; font-family: inherit; }
+  .result-text { color: #ddd; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+  input[type=range] { accent-color: var(--gold); }
+  .range-row { display: flex; align-items: center; gap: 12px; }
+  .range-label { color: var(--muted2); font-size: 12px; }
+  .range-val { color: var(--gold); font-weight: 700; font-size: 13px; min-width: 28px; }
+  .tp-preview { margin-top: 16px; background: #050505; border-radius: 10px; padding: 14px; border: 1px solid var(--bg4); max-height: 160px; overflow: hidden; position: relative; }
+  .tp-preview-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .tp-preview-text { color: var(--text2); font-size: 15px; line-height: 1.7; }
+  .tp-preview-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(transparent, #050505); }
+  #fullscreen-tp { display: none; position: fixed; inset: 0; background: #000; z-index: 999; flex-direction: column; }
+  #fullscreen-tp.show { display: flex; }
+  .tp-controls { background: rgba(0,0,0,0.95); padding: 12px 16px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #111; }
+  .tp-ctrl-btn { background: var(--gold); border: none; border-radius: 8px; color: #fff; padding: 8px 14px; cursor: pointer; font-size: 16px; }
+  .tp-ctrl-btn.secondary { background: var(--bg4); }
+  .tp-ctrl-btn.danger { background: var(--red); font-size: 12px; padding: 8px 12px; }
+  #tp-scroll-area { flex: 1; overflow: hidden; padding: 30px 24px; position: relative; }
+  #tp-text-content { font-size: 24px; line-height: 1.8; color: #fff; white-space: pre-wrap; font-weight: 500; font-family: Georgia, serif; padding-bottom: 60vh; }
+  .tp-focus-line { position: fixed; top: 50%; left: 0; right: 0; height: 2px; background: rgba(245,166,35,0.25); pointer-events: none; }
+  #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9999; }
+  #toast.show { opacity: 1; }
+  #footer { text-align: center; padding: 12px; border-top: 1px solid var(--bg4); margin-top: 20px; }
+  #footer p { color: #2a2a2a; font-size: 10px; letter-spacing: 1px; }
+  .flex-row { display: flex; gap: 10px; }
+  .flex-row .btn-primary { margin-top: 0; flex: 1; }
+  .mt-20 { margin-top: 20px; }
+
+  /* MONTAGE */
+  .upload-zone { border: 2px dashed var(--border2); border-radius: 14px; padding: 24px 16px; text-align: center; cursor: pointer; transition: border-color 0.2s; margin-top: 8px; background: var(--bg3); }
+  .upload-zone:hover { border-color: var(--gold); }
+  .upload-zone .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-zone .upload-text { color: var(--muted2); font-size: 14px; }
+  .upload-zone .upload-hint { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .video-preview { width: 100%; border-radius: 10px; margin-top: 12px; background: #000; max-height: 220px; }
+  .time-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .time-box { background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 10px; }
+  .time-box label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+  .time-box input { width: 100%; background: transparent; border: none; color: var(--gold); font-size: 20px; font-weight: 800; outline: none; font-family: inherit; }
+  .time-box .time-hint { color: var(--muted); font-size: 10px; margin-top: 4px; }
+  .text-overlay-preview { width: 100%; aspect-ratio: 9/16; background: #000; border-radius: 10px; position: relative; overflow: hidden; margin-top: 10px; display: flex; align-items: center; justify-content: center; }
+  .text-overlay-preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .overlay-text-display { position: absolute; color: #fff; font-weight: 800; text-shadow: 2px 2px 8px rgba(0,0,0,0.9); pointer-events: none; text-align: center; padding: 0 16px; z-index: 2; }
+  .pos-btn { padding: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--muted2); cursor: pointer; font-size: 11px; font-family: inherit; }
+  .pos-btn.active { border-color: var(--gold); color: var(--gold); }
+  .progress-bar-wrap { background: var(--bg4); border-radius: 8px; height: 8px; margin-top: 12px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--red)); border-radius: 8px; width: 0%; transition: width 0.3s; }
+  .progress-text { color: var(--muted2); font-size: 12px; text-align: center; margin-top: 8px; }
+  .size-display { display: flex; gap: 10px; margin-top: 12px; }
+  .size-box { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+  .size-box .size-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .size-box .size-val { color: var(--gold); font-size: 18px; font-weight: 800; margin-top: 4px; }
+  .quality-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .quality-btn { padding: 10px 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg3); color: var(--muted2); cursor: pointer; font-family: inherit; text-align: center; transition: all 0.2s; }
+  .quality-btn.active { border-color: var(--gold); background: rgba(245,166,35,0.15); color: var(--gold); }
+  .quality-btn .q-name { font-size: 12px; font-weight: 700; }
+  .quality-btn .q-res { font-size: 10px; margin-top: 2px; opacity: 0.7; }
+  .tool-tabs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .tool-tab { padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted2); font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .tool-tab.active { border-color: var(--gold); background: rgba(245,166,35,0.15); color: var(--gold); font-weight: 700; }
+  .tool-section { display: none; margin-top: 16px; }
+  .tool-section.active { display: block; }
+  .merge-slots { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .merge-slot { background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .merge-slot .slot-icon { font-size: 24px; }
+  .merge-slot .slot-info { flex: 1; }
+  .merge-slot .slot-name { color: var(--text); font-size: 13px; }
+  .merge-slot .slot-size { color: var(--muted2); font-size: 11px; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="header-top">
+    <div class="logo-icon">🎬</div>
+    <div>
+      <div class="logo-title">VidéoStudio v2</div>
+      <div class="logo-sub">PHASE 1 · LE CERVEAU</div>
+    </div>
+    <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('script')" id="tab-script">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>Script IA
+    </button>
+    <button class="tab-btn" onclick="switchTab('teleprompter')" id="tab-teleprompter">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>Téléprompter
+    </button>
+    <button class="tab-btn" onclick="switchTab('montage')" id="tab-montage">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>Montage
+    </button>
+    <button class="tab-btn" onclick="switchTab('compress')" id="tab-compress">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
+        <line x1="10" y1="12" x2="14" y2="12"/>
+      </svg>Compresseur
+    </button>
+  </div>
+</div>
+
+<div id="content">
+
+<!-- MODULE 01: SCRIPT IA -->
+<div id="module-script" class="module active">
+  <div class="field-label">Ton idée en une phrase</div>
+  <textarea id="script-idea" rows="3" placeholder="Ex: Pourquoi les jeunes africains doivent investir dès 20 ans..."></textarea>
+  <div class="field-label">Plateforme</div>
+  <div class="chips" id="chips-platform">
+    <button class="chip active" data-val="TikTok">TikTok</button>
+    <button class="chip" data-val="YouTube">YouTube</button>
+    <button class="chip" data-val="Instagram">Instagram</button>
+    <button class="chip" data-val="Facebook">Facebook</button>
+  </div>
+  <div class="field-label">Langue</div>
+  <div class="chips" id="chips-lang">
+    <button class="chip active" data-val="Français">Français</button>
+    <button class="chip" data-val="Nouchi">Nouchi</button>
+    <button class="chip" data-val="Anglais">Anglais</button>
+  </div>
+  <div class="field-label">Style</div>
+  <div class="chips" id="chips-style">
+    <button class="chip active" data-val="Éducatif">Éducatif</button>
+    <button class="chip" data-val="Motivationnel">Motivationnel</button>
+    <button class="chip" data-val="Divertissement">Divertissement</button>
+    <button class="chip" data-val="Informatif">Informatif</button>
+    <button class="chip" data-val="Slam / Poésie">Slam / Poésie</button>
+    <button class="chip" data-val="Tutoriel">Tutoriel</button>
+    <button class="chip" data-val="Identité africaine">Identité africaine</button>
+    <button class="chip" data-val="Cinématique">Cinématique</button>
+  </div>
+  <div class="field-label">Durée cible</div>
+  <div class="chips" id="chips-duration">
+    <button class="chip active" data-val="15s – 30s">15s – 30s</button>
+    <button class="chip" data-val="1 – 3 min">1 – 3 min</button>
+    <button class="chip" data-val="5 – 10 min">5 – 10 min</button>
+    <button class="chip" data-val="10 – 30 min">10 – 30 min</button>
+    <button class="chip" data-val="30 min – 2h">30 min – 2h</button>
+  </div>
+  <button class="btn-primary" id="btn-gen-script" onclick="generateScript()">✦ Générer le Script</button>
+  <div id="script-result" style="display:none; margin-top:16px;">
+    <div class="result-card">
+      <div class="result-card-header">
+        <span class="result-label">Script Généré</span>
+        <button class="btn-copy" onclick="copyText('script-output', 'Script copié !')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>Copier
+        </button>
+      </div>
+      <p class="result-text" id="script-output"></p>
+    </div>
+    <button class="btn-outline gold mt-20" onclick="sendToTeleprompter()">→ Ouvrir dans le Téléprompter</button>
+  </div>
+</div>
+
+<!-- MODULE 02: TÉLÉPROMPTER -->
+<div id="module-teleprompter" class="module">
+  <div class="field-label">Colle ou écris ton script</div>
+  <textarea id="tp-text" rows="7" placeholder="Colle ici ton script généré ou écris directement..."></textarea>
+  <div class="field-label">Vitesse de défilement</div>
+  <div class="range-row">
+    <span class="range-label">Lent</span>
+    <input type="range" id="tp-speed" min="1" max="6" step="0.5" value="2"
+      oninput="document.getElementById('tp-speed-val').textContent = this.value + 'x'" style="flex:1"/>
+    <span class="range-label">Rapide</span>
+    <span class="range-val" id="tp-speed-val">2x</span>
+  </div>
+  <div class="flex-row mt-20">
+    <button class="btn-primary" id="btn-tp-play" onclick="toggleTeleprompter()">▶ Démarrer</button>
+    <button class="btn-icon" onclick="resetTeleprompter()">↺</button>
+  </div>
+  <button class="btn-outline mt-20" onclick="openFullscreen()">⛶ Mode Plein Écran (Filmage)</button>
+  <div class="tp-preview">
+    <div class="tp-preview-label">Aperçu</div>
+    <div class="tp-preview-text" id="tp-preview-text">Ton script apparaîtra ici...</div>
+    <div class="tp-preview-fade"></div>
+  </div>
+</div>
+
+<!-- MODULE 03: MONTAGE -->
+<div id="module-montage" class="module">
+  <div class="field-label">Outils de montage</div>
+  <div class="tool-tabs">
+    <button class="tool-tab active" onclick="switchTool('cut')">✂️ Couper</button>
+    <button class="tool-tab" onclick="switchTool('text')">📝 Texte</button>
+    <button class="tool-tab" onclick="switchTool('merge')">🔗 Fusionner</button>
+  </div>
+
+  <!-- OUTIL COUPER -->
+  <div class="tool-section active" id="tool-cut">
+    <div class="upload-zone" onclick="document.getElementById('cut-input').click()">
+      <div class="upload-icon">🎬</div>
+      <div class="upload-text">Importer une vidéo à couper</div>
+      <div class="upload-hint">MP4, MOV, WebM</div>
+    </div>
+    <input type="file" id="cut-input" accept="video/*" style="display:none" onchange="handleCutUpload(this)"/>
+    <div id="cut-editor" style="display:none;">
+      <video id="cut-preview" class="video-preview" controls playsinline></video>
+      <div class="field-label">Choisir le segment à garder</div>
+      <div class="time-inputs">
+        <div class="time-box">
+          <label>Début (secondes)</label>
+          <input type="number" id="cut-start" value="0" min="0" step="0.1" oninput="updateCutPreview()"/>
+          <div class="time-hint">ex: 3.5</div>
+        </div>
+        <div class="time-box">
+          <label>Fin (secondes)</label>
+          <input type="number" id="cut-end" value="10" min="0" step="0.1" oninput="updateCutPreview()"/>
+          <div class="time-hint" id="cut-duration-hint">durée: 10s</div>
+        </div>
+      </div>
+      <button class="btn-outline gold mt-20" onclick="previewCut()">▶ Prévisualiser le segment</button>
+      <button class="btn-primary" id="btn-cut" onclick="exportCut()">✂️ Couper et Télécharger</button>
+      <div id="cut-progress" style="display:none; margin-top:12px;">
+        <div class="progress-bar-wrap"><div class="progress-bar" id="cut-progress-bar"></div></div>
+        <div class="progress-text" id="cut-progress-text">Export en cours...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTIL TEXTE -->
+  <div class="tool-section" id="tool-text">
+    <div class="upload-zone" onclick="document.getElementById('text-input').click()">
+      <div class="upload-icon">📝</div>
+      <div class="upload-text">Importer une vidéo</div>
+      <div class="upload-hint">MP4, MOV, WebM</div>
+    </div>
+    <input type="file" id="text-input" accept="video/*" style="display:none" onchange="handleTextUpload(this)"/>
+    <div id="text-editor" style="display:none;">
+      <div class="field-label">Texte à afficher</div>
+      <input type="text" id="overlay-text" placeholder="Ex: ABIDJAN 🇨🇮 · @AppsBuilder" oninput="updateOverlay()"/>
+      <div class="field-label">Taille du texte</div>
+      <div class="range-row">
+        <span class="range-label">Petit</span>
+        <input type="range" id="text-size" min="16" max="48" value="28" oninput="updateOverlay()" style="flex:1"/>
+        <span class="range-label">Grand</span>
+      </div>
+      <div class="field-label">Position</div>
+      <div class="chips" style="gap:6px;" id="text-position-chips">
+        <button class="chip" data-pos="top" onclick="setTextPos('top', this)">Haut</button>
+        <button class="chip active" data-pos="center" onclick="setTextPos('center', this)">Centre</button>
+        <button class="chip" data-pos="bottom" onclick="setTextPos('bottom', this)">Bas</button>
+      </div>
+      <div class="field-label">Couleur du texte</div>
+      <div class="chips">
+        <button class="chip active" onclick="setTextColor('#FFFFFF', this)">⬜ Blanc</button>
+        <button class="chip" onclick="setTextColor('#F5A623', this)">🟡 Or</button>
+        <button class="chip" onclick="setTextColor('#000000', this)">⬛ Noir</button>
+        <button class="chip" onclick="setTextColor('#FF0000', this)">🔴 Rouge</button>
+      </div>
+      <div class="text-overlay-preview" id="text-preview-container">
+        <video id="text-video-preview" playsinline muted loop></video>
+        <div class="overlay-text-display" id="overlay-display">Ton texte ici</div>
+      </div>
+      <button class="btn-primary" id="btn-text-export" onclick="exportTextOverlay()">📝 Exporter avec texte</button>
+      <div id="text-progress" style="display:none; margin-top:12px;">
+        <div class="progress-bar-wrap"><div class="progress-bar" id="text-progress-bar"></div></div>
+        <div class="progress-text" id="text-progress-text">Export en cours...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTIL FUSIONNER -->
+  <div class="tool-section" id="tool-merge">
+    <p style="color:var(--muted2); font-size:13px; margin-bottom:12px;">Sélectionne 2 clips à fusionner dans l'ordre.</p>
+    <div class="merge-slots">
+      <div class="merge-slot" onclick="document.getElementById('merge-input-1').click()">
+        <div class="slot-icon">1️⃣</div>
+        <div class="slot-info">
+          <div class="slot-name" id="merge-name-1">Clip 1 — Appuie pour choisir</div>
+          <div class="slot-size" id="merge-size-1">Aucun fichier</div>
+        </div>
+      </div>
+      <div style="text-align:center; color:var(--muted); font-size:18px;">+</div>
+      <div class="merge-slot" onclick="document.getElementById('merge-input-2').click()">
+        <div class="slot-icon">2️⃣</div>
+        <div class="slot-info">
+          <div class="slot-name" id="merge-name-2">Clip 2 — Appuie pour choisir</div>
+          <div class="slot-size" id="merge-size-2">Aucun fichier</div>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="merge-input-1" accept="video/*" style="display:none" onchange="handleMergeUpload(this, 1)"/>
+    <input type="file" id="merge-input-2" accept="video/*" style="display:none" onchange="handleMergeUpload(this, 2)"/>
+    <button class="btn-primary" id="btn-merge" onclick="exportMerge()" disabled>🔗 Fusionner et Télécharger</button>
+    <div id="merge-progress" style="display:none; margin-top:12px;">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="merge-progress-bar"></div></div>
+      <div class="progress-text" id="merge-progress-text">Fusion en cours...</div>
+    </div>
+    <p style="color:var(--muted); font-size:11px; margin-top:12px; text-align:center;">Les 2 clips doivent avoir le même format (vertical ou horizontal)</p>
+  </div>
+</div>
+
+<!-- MODULE 04: COMPRESSEUR -->
+<div id="module-compress" class="module">
+  <div class="upload-zone" onclick="document.getElementById('video-input').click()">
+    <div class="upload-icon">🎥</div>
+    <div class="upload-text">Appuie pour choisir une vidéo</div>
+    <div class="upload-hint">MP4, MOV, WebM — depuis ta galerie</div>
+  </div>
+  <input type="file" id="video-input" accept="video/*" style="display:none" onchange="handleVideoUpload(this)"/>
+  <div id="compress-info" style="display:none;">
+    <video id="compress-preview" class="video-preview" controls playsinline></video>
+    <div class="size-display">
+      <div class="size-box">
+        <div class="size-label">Taille originale</div>
+        <div class="size-val" id="orig-size">—</div>
+      </div>
+      <div class="size-box">
+        <div class="size-label">Après compression</div>
+        <div class="size-val" id="new-size">—</div>
+      </div>
+    </div>
+    <div class="field-label">Qualité cible</div>
+    <div class="quality-grid">
+      <button class="quality-btn" onclick="selectQuality('light', this)">
+        <div class="q-name">🪶 Légère</div><div class="q-res">480p · ~5Mo/min</div>
+      </button>
+      <button class="quality-btn active" onclick="selectQuality('medium', this)">
+        <div class="q-name">⚡ Moyenne</div><div class="q-res">720p · ~12Mo/min</div>
+      </button>
+      <button class="quality-btn" onclick="selectQuality('high', this)">
+        <div class="q-name">💎 Haute</div><div class="q-res">1080p · ~25Mo/min</div>
+      </button>
+    </div>
+    <button class="btn-primary" id="btn-compress" onclick="startCompression()">🗜️ Compresser et Télécharger</button>
+    <div id="compress-progress" style="display:none; margin-top:12px;">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="compress-bar"></div></div>
+      <div class="progress-text" id="compress-text">Compression en cours...</div>
+    </div>
+  </div>
+  <div style="margin-top:20px;">
+    <div class="field-label">💡 Conseils données mobiles</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted2);margin-top:8px;">
+      <strong style="color:var(--gold)">Avant YouTube :</strong> compresse en Moyenne 720p → 50–70% économisé.
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted2);margin-top:8px;">
+      <strong style="color:var(--gold)">TikTok/WhatsApp :</strong> Légère 480p suffit, les plateformes recompressent.
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div id="footer"><p>SECKA · BUILDER IVOIRIEN · ABIDJAN</p></div>
+
+<div id="fullscreen-tp">
+  <div class="tp-controls">
+    <button class="tp-ctrl-btn" id="fs-play-btn" onclick="fsToggle()">▶</button>
+    <button class="tp-ctrl-btn secondary" onclick="fsReset()">↺</button>
+    <input type="range" id="fs-speed" min="1" max="6" step="0.5" value="2" style="flex:1; accent-color:#F5A623"/>
+    <button class="tp-ctrl-btn danger" onclick="closeFullscreen()">✕ Quitter</button>
+  </div>
+  <div id="tp-scroll-area"><div id="tp-text-content"></div></div>
+  <div class="tp-focus-line"></div>
+</div>
+<div id="toast">✓ Copié !</div>
+
+<script>
+const state = {
+  scriptPlatform:'TikTok', scriptLang:'Français', scriptStyle:'Éducatif', scriptDuration:'15s – 30s',
+  tpRunning:false, tpScrollPos:0, tpAnimId:null, tpLastTime:null,
+  fsRunning:false, fsScrollPos:0, fsAnimId:null, fsLastTime:null,
+  compressQuality:'medium',
+  textPos:'center', textColor:'#FFFFFF',
+};
+let cutFile=null, textFile=null, mergeFile1=null, mergeFile2=null, compressFile=null, compressedBlob=null;
+
+// TABS
+function switchTab(id) {
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('module-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  stopTeleprompter();
+}
+
+function switchTool(id) {
+  document.querySelectorAll('.tool-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tool-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tool-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function initChips(cid, key, multi=false) {
+  const c=document.getElementById(cid);
+  if(!c) return;
+  c.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const val=chip.dataset.val;
+      if(multi){
+        chip.classList.toggle('active');
+        const active=[...c.querySelectorAll('.chip.active')].map(x=>x.dataset.val);
+        state[key]=active.length?active:[val];
+        if(!active.length) chip.classList.add('active');
+      } else {
+        c.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+        chip.classList.add('active');
+        state[key]=val;
+      }
+    });
+  });
+}
+initChips('chips-platform','scriptPlatform');
+initChips('chips-lang','scriptLang');
+initChips('chips-style','scriptStyle');
+initChips('chips-duration','scriptDuration');
+
+document.getElementById('tp-text').addEventListener('input',function(){
+  document.getElementById('tp-preview-text').textContent=this.value.slice(0,200)||'Ton script apparaîtra ici...';
+});
+
+async function callClaude(userPrompt, sys) {
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:userPrompt}]})
+  });
+  const data=await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content?.[0]?.text||'';
+}
+
+async function generateScript() {
+  const idea=document.getElementById('script-idea').value.trim();
+  if(!idea) return;
+  const btn=document.getElementById('btn-gen-script');
+  btn.disabled=true; btn.textContent='✦ Génération en cours...';
+  document.getElementById('script-result').style.display='none';
+  try {
+    const nouchi=state.scriptLang==='Nouchi'?'Utilise le Nouchi ivoirien (wari, gou, foutou...).':'';
+    const sys=`Tu es expert en contenu vidéo pour réseaux sociaux africains. Langue: ${state.scriptLang==='Anglais'?'English':'Français'}. ${nouchi}`;
+    const prompt=`Génère un script vidéo pour: "${idea}"\nPlateforme: ${state.scriptPlatform}\nStyle: ${state.scriptStyle}\nDurée: ${state.scriptDuration}\n\nStructure:\n🎯 HOOK\n📖 CORPS\n📣 CTA`;
+    const text=await callClaude(prompt,sys);
+    document.getElementById('script-output').textContent=text;
+    document.getElementById('script-result').style.display='block';
+  } catch(e) {
+    document.getElementById('script-output').textContent='Erreur: '+e.message;
+    document.getElementById('script-result').style.display='block';
+  }
+  btn.disabled=false; btn.textContent='✦ Générer le Script';
+}
+
+function sendToTeleprompter() {
+  const t=document.getElementById('script-output').textContent;
+  document.getElementById('tp-text').value=t;
+  document.getElementById('tp-preview-text').textContent=t.slice(0,200);
+  switchTab('teleprompter');
+}
+
+// TELEPROMPTER
+function toggleTeleprompter(){state.tpRunning?stopTeleprompter():startTeleprompter();}
+function startTeleprompter(){
+  state.tpRunning=true; document.getElementById('btn-tp-play').textContent='⏸ Pause';
+  const area=document.querySelector('.tp-preview'); state.tpLastTime=null;
+  function scroll(ts){
+    if(!state.tpRunning) return;
+    if(state.tpLastTime){const s=parseFloat(document.getElementById('tp-speed').value);state.tpScrollPos+=(ts-state.tpLastTime)*s*0.03;area.scrollTop=state.tpScrollPos;}
+    state.tpLastTime=ts; state.tpAnimId=requestAnimationFrame(scroll);
+  }
+  state.tpAnimId=requestAnimationFrame(scroll);
+}
+function stopTeleprompter(){state.tpRunning=false;document.getElementById('btn-tp-play').textContent='▶ Démarrer';if(state.tpAnimId)cancelAnimationFrame(state.tpAnimId);}
+function resetTeleprompter(){stopTeleprompter();state.tpScrollPos=0;document.querySelector('.tp-preview').scrollTop=0;}
+function openFullscreen(){
+  const t=document.getElementById('tp-text').value;if(!t.trim())return;
+  document.getElementById('tp-text-content').textContent=t;
+  document.getElementById('fullscreen-tp').classList.add('show');
+  state.fsScrollPos=0;state.fsRunning=false;document.getElementById('fs-play-btn').textContent='▶';
+}
+function closeFullscreen(){document.getElementById('fullscreen-tp').classList.remove('show');fsStop();}
+function fsToggle(){state.fsRunning?fsStop():fsStart();}
+function fsStart(){
+  state.fsRunning=true;document.getElementById('fs-play-btn').textContent='⏸';
+  const area=document.getElementById('tp-scroll-area');state.fsLastTime=null;
+  function scroll(ts){
+    if(!state.fsRunning)return;
+    if(state.fsLastTime){const s=parseFloat(document.getElementById('fs-speed').value);state.fsScrollPos+=(ts-state.fsLastTime)*s*0.05;area.scrollTop=state.fsScrollPos;}
+    state.fsLastTime=ts;state.fsAnimId=requestAnimationFrame(scroll);
+  }
+  state.fsAnimId=requestAnimationFrame(scroll);
+}
+function fsStop(){state.fsRunning=false;document.getElementById('fs-play-btn').textContent='▶';if(state.fsAnimId)cancelAnimationFrame(state.fsAnimId);}
+function fsReset(){fsStop();state.fsScrollPos=0;document.getElementById('tp-scroll-area').scrollTop=0;}
+
+// ══ MONTAGE — COUPER ══
+function handleCutUpload(input){
+  cutFile=input.files[0];if(!cutFile)return;
+  const url=URL.createObjectURL(cutFile);
+  const vid=document.getElementById('cut-preview');
+  vid.src=url;
+  vid.onloadedmetadata=()=>{
+    document.getElementById('cut-end').value=Math.floor(vid.duration);
+    document.getElementById('cut-duration-hint').textContent='durée: '+Math.floor(vid.duration)+'s';
+    updateCutPreview();
+  };
+  document.getElementById('cut-editor').style.display='block';
+}
+function updateCutPreview(){
+  const start=parseFloat(document.getElementById('cut-start').value)||0;
+  const end=parseFloat(document.getElementById('cut-end').value)||10;
+  const dur=Math.max(0,end-start);
+  document.getElementById('cut-duration-hint').textContent='durée: '+dur.toFixed(1)+'s';
+}
+function previewCut(){
+  const vid=document.getElementById('cut-preview');
+  const start=parseFloat(document.getElementById('cut-start').value)||0;
+  vid.currentTime=start; vid.play();
+  const end=parseFloat(document.getElementById('cut-end').value)||10;
+  const stop=setTimeout(()=>vid.pause(),(end-start)*1000);
+  vid.onended=()=>clearTimeout(stop);
+}
+async function exportCut(){
+  if(!cutFile)return;
+  const btn=document.getElementById('btn-cut');btn.disabled=true;
+  const start=parseFloat(document.getElementById('cut-start').value)||0;
+  const end=parseFloat(document.getElementById('cut-end').value)||10;
+  document.getElementById('cut-progress').style.display='block';
+  try {
+    const videoEl=document.createElement('video');
+    videoEl.src=URL.createObjectURL(cutFile);videoEl.muted=true;
+    await new Promise(r=>{videoEl.onloadedmetadata=r;});
+    const canvas=document.createElement('canvas');
+    canvas.width=videoEl.videoWidth;canvas.height=videoEl.videoHeight;
+    const ctx=canvas.getContext('2d');
+    const stream=canvas.captureStream(30);
+    const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+    const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:2000000});
+    const chunks=[];
+    recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+    videoEl.currentTime=start;
+    await new Promise(r=>{videoEl.onseeked=r;});
+    recorder.start(100);videoEl.play();
+    const duration=end-start;let startTs=null;
+    await new Promise((resolve)=>{
+      function draw(ts){
+        if(!startTs)startTs=ts;
+        const elapsed=(ts-startTs)/1000;
+        const pct=Math.min((elapsed/duration)*100,99);
+        document.getElementById('cut-progress-bar').style.width=pct+'%';
+        document.getElementById('cut-progress-text').textContent='Export: '+Math.round(pct)+'%';
+        ctx.drawImage(videoEl,0,0);
+        if(elapsed<duration&&!videoEl.ended){requestAnimationFrame(draw);}
+        else{videoEl.pause();recorder.stop();resolve();}
+      }
+      requestAnimationFrame(draw);
+    });
+    await new Promise(r=>{recorder.onstop=r;});
+    const blob=new Blob(chunks,{type:mimeType});
+    downloadBlob(blob,'clip_coupe.webm');
+    document.getElementById('cut-progress-bar').style.width='100%';
+    document.getElementById('cut-progress-text').textContent='✅ Téléchargement démarré !';
+  } catch(e){document.getElementById('cut-progress-text').textContent='Erreur: '+e.message;}
+  btn.disabled=false;
+}
+
+// ══ MONTAGE — TEXTE ══
+function handleTextUpload(input){
+  textFile=input.files[0];if(!textFile)return;
+  const url=URL.createObjectURL(textFile);
+  const vid=document.getElementById('text-video-preview');
+  vid.src=url;vid.play();
+  document.getElementById('text-editor').style.display='block';
+  updateOverlay();
+}
+function updateOverlay(){
+  const txt=document.getElementById('overlay-text').value||'Ton texte ici';
+  const size=document.getElementById('text-size').value;
+  const el=document.getElementById('overlay-display');
+  el.textContent=txt;el.style.fontSize=size+'px';el.style.color=state.textColor;
+  const pos=state.textPos;
+  el.style.top=pos==='top'?'10%':pos==='bottom'?'auto':'50%';
+  el.style.bottom=pos==='bottom'?'10%':'auto';
+  el.style.transform=pos==='center'?'translateY(-50%)':'none';
+}
+function setTextPos(pos,btn){
+  state.textPos=pos;
+  document.querySelectorAll('#text-position-chips .chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  updateOverlay();
+}
+function setTextColor(color,btn){
+  state.textColor=color;
+  document.querySelectorAll('.chips .chip').forEach(c=>{if(c.onclick&&c.onclick.toString().includes('setTextColor'))c.classList.remove('active');});
+  btn.classList.add('active');
+  updateOverlay();
+}
+async function exportTextOverlay(){
+  if(!textFile)return;
+  const btn=document.getElementById('btn-text-export');btn.disabled=true;
+  document.getElementById('text-progress').style.display='block';
+  const overlayTxt=document.getElementById('overlay-text').value;
+  const fontSize=parseInt(document.getElementById('text-size').value);
+  try {
+    const videoEl=document.createElement('video');
+    videoEl.src=URL.createObjectURL(textFile);videoEl.muted=true;
+    await new Promise(r=>{videoEl.onloadedmetadata=r;});
+    const canvas=document.createElement('canvas');
+    canvas.width=videoEl.videoWidth;canvas.height=videoEl.videoHeight;
+    const ctx=canvas.getContext('2d');
+    const stream=canvas.captureStream(30);
+    const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+    const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:2500000});
+    const chunks=[];recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+    recorder.start(100);videoEl.play();
+    const duration=videoEl.duration;let startTs=null;
+    await new Promise((resolve)=>{
+      function draw(ts){
+        if(!startTs)startTs=ts;
+        const elapsed=(ts-startTs)/1000;
+        const pct=Math.min((elapsed/duration)*100,99);
+        document.getElementById('text-progress-bar').style.width=pct+'%';
+        document.getElementById('text-progress-text').textContent='Export: '+Math.round(pct)+'%';
+        ctx.drawImage(videoEl,0,0);
+        if(overlayTxt){
+          ctx.font=`bold ${fontSize*2}px Arial`;
+          ctx.fillStyle=state.textColor;
+          ctx.textAlign='center';
+          ctx.shadowColor='rgba(0,0,0,0.9)';ctx.shadowBlur=8;
+          const yPos=state.textPos==='top'?fontSize*3:state.textPos==='bottom'?canvas.height-fontSize*2:canvas.height/2;
+          ctx.fillText(overlayTxt,canvas.width/2,yPos);
+          ctx.shadowBlur=0;
+        }
+        if(elapsed<duration&&!videoEl.ended){requestAnimationFrame(draw);}
+        else{videoEl.pause();recorder.stop();resolve();}
+      }
+      requestAnimationFrame(draw);
+    });
+    await new Promise(r=>{recorder.onstop=r;});
+    const blob=new Blob(chunks,{type:mimeType});
+    downloadBlob(blob,'video_avec_texte.webm');
+    document.getElementById('text-progress-bar').style.width='100%';
+    document.getElementById('text-progress-text').textContent='✅ Téléchargement démarré !';
+  } catch(e){document.getElementById('text-progress-text').textContent='Erreur: '+e.message;}
+  btn.disabled=false;
+}
+
+// ══ MONTAGE — FUSIONNER ══
+function handleMergeUpload(input,slot){
+  const file=input.files[0];if(!file)return;
+  if(slot===1)mergeFile1=file;else mergeFile2=file;
+  document.getElementById('merge-name-'+slot).textContent=file.name;
+  document.getElementById('merge-size-'+slot).textContent=formatSize(file.size);
+  if(mergeFile1&&mergeFile2)document.getElementById('btn-merge').disabled=false;
+}
+async function exportMerge(){
+  if(!mergeFile1||!mergeFile2)return;
+  const btn=document.getElementById('btn-merge');btn.disabled=true;
+  document.getElementById('merge-progress').style.display='block';
+  try{
+    const files=[mergeFile1,mergeFile2];
+    const allChunks=[];
+    const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+    let width=0,height=0;
+    for(const f of files){
+      const v=document.createElement('video');
+      v.src=URL.createObjectURL(f);v.muted=true;
+      await new Promise(r=>{v.onloadedmetadata=r;});
+      if(!width){width=v.videoWidth;height=v.videoHeight;}
+    }
+    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext('2d');
+    const stream=canvas.captureStream(30);
+    const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:2500000});
+    recorder.ondataavailable=e=>{if(e.data.size>0)allChunks.push(e.data);};
+    recorder.start(100);
+    let fileIndex=0;
+    const playNext=()=>new Promise(resolve=>{
+      if(fileIndex>=files.length){resolve();return;}
+      const v=document.createElement('video');
+      v.src=URL.createObjectURL(files[fileIndex]);v.muted=true;
+      v.onloadedmetadata=()=>{v.play();};
+      let startTs=null;const dur=null;
+      function draw(ts){
+        if(!startTs)startTs=ts;
+        const elapsed=(ts-startTs)/1000;
+        const total=(fileIndex+elapsed/(v.duration||10))/files.length*100;
+        document.getElementById('merge-progress-bar').style.width=Math.min(total,99)+'%';
+        document.getElementById('merge-progress-text').textContent='Fusion clip '+(fileIndex+1)+'/'+files.length+' : '+Math.round(elapsed/(v.duration||10)*100)+'%';
+        ctx.drawImage(v,0,0,canvas.width,canvas.height);
+        if(!v.ended){requestAnimationFrame(draw);}
+        else{fileIndex++;resolve();}
+      }
+      v.onplay=()=>requestAnimationFrame(draw);
+      v.onerror=resolve;
+    });
+    for(let i=0;i<files.length;i++){await playNext();}
+    recorder.stop();
+    await new Promise(r=>{recorder.onstop=r;});
+    const blob=new Blob(allChunks,{type:mimeType});
+    downloadBlob(blob,'fusion.webm');
+    document.getElementById('merge-progress-bar').style.width='100%';
+    document.getElementById('merge-progress-text').textContent='✅ Fusion terminée !';
+  }catch(e){document.getElementById('merge-progress-text').textContent='Erreur: '+e.message;}
+  btn.disabled=false;
+}
+
+// ══ COMPRESSEUR ══
+function handleVideoUpload(input){
+  compressFile=input.files[0];if(!compressFile)return;
+  const url=URL.createObjectURL(compressFile);
+  document.getElementById('compress-preview').src=url;
+  document.getElementById('orig-size').textContent=formatSize(compressFile.size);
+  document.getElementById('new-size').textContent='~'+formatSize(compressFile.size*0.45);
+  document.getElementById('compress-info').style.display='block';
+}
+function selectQuality(q,btn){
+  state.compressQuality=q;
+  document.querySelectorAll('.quality-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const ratios={light:0.25,medium:0.45,high:0.7};
+  if(compressFile)document.getElementById('new-size').textContent='~'+formatSize(compressFile.size*ratios[q]);
+}
+async function startCompression(){
+  if(!compressFile)return;
+  const btn=document.getElementById('btn-compress');btn.disabled=true;
+  document.getElementById('compress-progress').style.display='block';
+  const settings={light:{width:854,height:480,bitrate:800000},medium:{width:1280,height:720,bitrate:1500000},high:{width:1920,height:1080,bitrate:3000000}};
+  const s=settings[state.compressQuality];
+  try{
+    const videoEl=document.createElement('video');
+    videoEl.src=URL.createObjectURL(compressFile);videoEl.muted=true;
+    await new Promise(r=>{videoEl.onloadedmetadata=r;});
+    const canvas=document.createElement('canvas');
+    const aspect=videoEl.videoWidth/videoEl.videoHeight;
+    if(aspect>1){canvas.width=Math.min(s.width,videoEl.videoWidth);canvas.height=Math.round(canvas.width/aspect);}
+    else{canvas.height=Math.min(s.height,videoEl.videoHeight);canvas.width=Math.round(canvas.height*aspect);}
+    const ctx=canvas.getContext('2d');
+    const stream=canvas.captureStream(30);
+    const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+    const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:s.bitrate});
+    const chunks=[];recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+    recorder.start(100);videoEl.play();
+    const duration=videoEl.duration;let startTs=null;
+    await new Promise(resolve=>{
+      function draw(ts){
+        if(!startTs)startTs=ts;
+        const elapsed=(ts-startTs)/1000;
+        const pct=Math.min((elapsed/duration)*100,99);
+        document.getElementById('compress-bar').style.width=pct+'%';
+        document.getElementById('compress-text').textContent='Compression: '+Math.round(pct)+'%';
+        ctx.drawImage(videoEl,0,0,canvas.width,canvas.height);
+        if(elapsed<duration&&!videoEl.ended){requestAnimationFrame(draw);}
+        else{videoEl.pause();recorder.stop();resolve();}
+      }
+      videoEl.onended=()=>{recorder.stop();resolve();};
+      requestAnimationFrame(draw);
+    });
+    await new Promise(r=>{recorder.onstop=r;});
+    compressedBlob=new Blob(chunks,{type:mimeType});
+    downloadBlob(compressedBlob,'compressed.webm');
+    document.getElementById('new-size').textContent=formatSize(compressedBlob.size);
+    document.getElementById('compress-bar').style.width='100%';
+    document.getElementById('compress-text').textContent='✅ Téléchargement démarré !';
+  }catch(e){document.getElementById('compress-text').textContent='Erreur: '+e.message;}
+  btn.disabled=false;
+}
+
+// UTILS
+function formatSize(b){if(b<1024*1024)return(b/1024).toFixed(1)+' Ko';return(b/(1024*1024)).toFixed(1)+' Mo';}
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),5000);}
+function copyText(id,msg){navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>showToast(msg));}
+function showToast(msg){const t=document.getElementById('toast');t.textContent='✓ '+msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+</script>
+</body>
+</html>
